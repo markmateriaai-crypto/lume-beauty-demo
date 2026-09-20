@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUMÉ — ателье красоты в Ташкенте</title>
+<meta name="description" content="LUMÉ — премиальное ателье красоты в Ташкенте: уход за лицом, восстановление волос, спа-маникюр, вечерние образы. Час тишины в центре города. Оставьте заявку — перезвоним за 15 минут.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#17110B">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+<link rel="preload" as="image" href="./frames/f_0001.jpg" fetchpriority="high">
+
+<meta property="og:url" content="https://markmateriaai-crypto.github.io/lume-beauty-demo/">
+<!-- Open Graph: превью при шаринге ссылки -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LUMÉ — Atelier de beauté">
+<meta property="og:title" content="LUMÉ — ателье красоты в Ташкенте">
+<meta property="og:description" content="Час тишины в центре города: уход, сияние, шёлк. Оставьте заявку — перезвоним за 15 минут.">
+<meta property="og:image" content="https://markmateriaai-crypto.github.io/lume-beauty-demo/img/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://markmateriaai-crypto.github.io/lume-beauty-demo/img/og-cover.jpg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com">
+<!-- ключевые начертания хиро — чтобы своп не двигал раскладку -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/prata/v22/6xKhdSpbNNCT-sWLCm7bLnwIcOM.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/prata/v22/6xKhdSpbNNCT-sWPCm7bLnwI.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Prata&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- maplibre CSS/JS грузятся лениво вместе с картой — см. loadMapAssets() -->
+<style>
+  /* метрический фолбэк: Georgia, подогнанная к ширинам Prata — своп шрифта не двигает раскладку */
+  @font-face{font-family:'Georgia adj';src:local('Georgia');size-adjust:100%}
+  :root{
+    --noir:#17110B; --cream:#F4ECDF; --gold:#C9A45C; --amber:#8A5A2B;
+    --seam:#b8aca2; --err:#A4442E;
+    /* чернильные прозрачности и глубины крема — все оттенки бренда в одном месте */
+    --ink-14:rgba(23,17,11,.14); --ink-18:rgba(23,17,11,.18); --ink-25:rgba(23,17,11,.25); --ink-55:rgba(23,17,11,.55);
+    --cream-deep:#EFE5D2; --cream-press:#EAE0CE;
+    /* словарь моушена: отклик · смена состояния · сцена; кривая дома — от зума портретов */
+    --t-quick:.25s; --t-soft:.45s; --t-scene:.9s;
+    --e-out:cubic-bezier(.2,.6,.2,1); --e-inout:cubic-bezier(.65,.05,.36,1);
+    --serif:'Prata','Georgia adj',Georgia,serif;
+    --sans:'Onest',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scrollbar-width:thin;scrollbar-color:var(--gold) var(--noir)}
+  body{background:var(--noir);color:var(--cream);font-family:var(--sans);font-weight:300;overflow-x:hidden}
+  ::selection{background:var(--gold);color:var(--noir)}
+
+  /* ---------- ЗАГРУЗЧИК ---------- */
+  #loader{position:fixed;inset:0;z-index:100;background:var(--noir);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:28px;transition:opacity var(--t-scene) ease, visibility var(--t-scene)}
+  #loader.done{opacity:0;visibility:hidden;pointer-events:none}
+  #loader .bar{width:min(280px,60vw);height:1px;background:rgba(244,236,223,.15);position:relative;overflow:hidden}
+  #loader .bar i{position:absolute;inset:0;background:var(--gold);transform-origin:left;transform:scaleX(0);transition:transform var(--t-quick) ease}
+  #loader .pct{font-size:11px;letter-spacing:.35em;color:rgba(244,236,223,.55);font-variant-numeric:tabular-nums}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* ---------- ШАПКА ---------- */
+  header{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+    padding:22px clamp(20px,4vw,54px);color:var(--cream);transition:color var(--t-soft) ease;pointer-events:none}
+  header a{pointer-events:auto}
+  header.on-light{color:var(--noir)}
+  /* вуаль-подложка: после фильма и только на светлых секциях — на тёмных кремовая шапка
+     читается сама, а тёмный градиент пачкал бы стыки секций */
+  header::before{content:'';position:absolute;inset:0 0 -34px;z-index:-1;opacity:0;transition:opacity var(--t-soft) ease, background var(--t-soft) ease;
+    background:linear-gradient(to bottom, var(--noir) 0%, var(--noir) 42%, rgba(23,17,11,.85) 70%, transparent)}
+  header.veil::before{opacity:1}
+  header.veil.on-light::before{background:linear-gradient(to bottom, var(--cream) 0%, var(--cream) 42%, rgba(244,236,223,.88) 70%, transparent)}
+  .hright{display:flex;align-items:center;gap:26px}
+  header .quick{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:currentColor;
+    text-decoration:none;opacity:.75;transition:opacity .3s}
+  header .quick:hover{opacity:1}
+  @media(max-width:640px){header .quick{display:none}}
+  header .lockup{display:flex;align-items:baseline;gap:14px;color:currentColor;text-decoration:none}
+  header .lockup svg{display:block;height:26px;width:auto;fill:currentColor}
+  header .lockup .sub{font-size:10px;letter-spacing:.42em;opacity:.65;text-transform:uppercase;transform:translateY(-2px);white-space:nowrap}
+  @media(max-width:640px){header .lockup .sub{display:none}}
+  #chapter{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:10px;letter-spacing:.4em;
+    text-transform:uppercase;opacity:0;transition:opacity var(--t-soft) ease}
+  #chapter.show{opacity:.85}
+  #chapter .track{width:120px;height:1px;background:currentColor;opacity:.25;position:relative}
+  #chapter .track i{position:absolute;top:-0.5px;left:0;height:2px;background:var(--gold);width:0%}
+  header .cta{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:currentColor;text-decoration:none;
+    padding:11px 22px;border:1px solid currentColor;border-radius:99px;transition:background var(--t-quick),color var(--t-quick),border-color var(--t-quick)}
+  header .cta:hover{background:var(--gold);border-color:var(--gold);color:var(--noir)}
+  @media(max-width:640px){#chapter{display:none}header .cta{padding:9px 15px;font-size:10px}}
+
+  /* ---------- ФИЛЬМ ---------- */
+  #film{height:850vh;position:relative}
+  #stage{position:sticky;top:0;height:100vh;overflow:hidden;background:var(--noir)}
+  #screen,#ambient{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .grain,.vignette{position:absolute;inset:0;pointer-events:none}
+  .vignette{background:radial-gradient(ellipse at center, transparent 55%, rgba(13,9,5,.55) 100%)}
+  .grain{opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E")}
+  #fadeBottom{position:absolute;left:0;right:0;bottom:0;height:34vh;pointer-events:none;opacity:0;
+    background:linear-gradient(to bottom, transparent, var(--seam))}
+  /* тихий выход для тех, кто пришёл за ценами: виден только внутри фильма */
+  .skip{position:absolute;right:clamp(20px,4vw,54px);bottom:34px;font-size:10px;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--noir);text-decoration:none;opacity:0;pointer-events:none;
+    transition:opacity var(--t-soft) ease;text-shadow:0 1px 12px rgba(244,236,223,.6)}
+  .skip.show{opacity:.7;pointer-events:auto}
+  .skip:hover{opacity:1}
+
+  /* Текст поверх фильма. Кадры светлые и пёстрые (крем, золотые вспышки), поэтому любая
+     статичная полярность текста где-нибудь проваливается. Решение из киноязыка:
+     1) #dim — кадр деликатно притемняется ТОЛЬКО пока на экране есть текст (яркость ведёт тик),
+        между главами картинка играет в полную силу;
+     2) за самим текстом — мягкая дымка, растворяющаяся к краям; никаких плашек и рамок;
+     3) текст кремовый, акцент — светлое золото, которое держится даже на золотом кадре. */
+  #dim{position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:radial-gradient(ellipse 76% 60% at 50% 50%, rgba(23,17,11,.30) 0%, rgba(23,17,11,.50) 62%, rgba(23,17,11,.60) 100%)}
+  .beat{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;opacity:0;pointer-events:none;padding:0 6vw;color:var(--cream)}
+  .beat>*{position:relative}
+  .beat:not(.finale)::before{content:'';position:absolute;inset:22% 6%;pointer-events:none;
+    background:radial-gradient(ellipse 56% 44% at 50% 50%, rgba(23,17,11,.52) 0%, rgba(23,17,11,.28) 54%, transparent 78%);
+    filter:blur(28px)}
+  /* кикер — крем: золото на 11px не набирает 4.5:1 даже поверх затемнения (замер contrast-check),
+     фирменное золото остаётся в точке-маркере и в акценте заголовка */
+  .beat .kicker{font-size:11px;letter-spacing:.5em;text-transform:uppercase;color:var(--cream);margin-bottom:22px;
+    text-shadow:0 1px 6px rgba(13,9,5,.8)}
+  .beat .kicker::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;
+    background:var(--gold);margin-right:14px;transform:translateY(-3px)}
+  .beat h2{font-family:var(--serif);font-weight:400;font-size:clamp(28px,5vw,74px);line-height:1.14;letter-spacing:0;
+    text-shadow:0 1px 3px rgba(13,9,5,.65), 0 8px 44px rgba(13,9,5,.5)}
+  /* у Prata нет курсива — акцент держим цветом; светлое золото поверх тёмной дымки */
+  .beat h2 em{font-style:normal;color:#EBD3A0}
+  .beat.finale .kicker{text-shadow:0 1px 3px rgba(13,9,5,.5), 0 4px 30px rgba(13,9,5,.45)}
+  .beat.finale h2{text-shadow:0 1px 3px rgba(13,9,5,.5), 0 6px 56px rgba(13,9,5,.45)}
+  .beat.hero .wordmark svg{width:clamp(240px,38vw,560px);height:auto;fill:var(--cream);filter:drop-shadow(0 3px 30px rgba(13,9,5,.5))}
+  .beat.hero .tag{margin-top:26px;font-size:12px;letter-spacing:.52em;text-transform:uppercase;
+    text-shadow:0 1px 10px rgba(13,9,5,.7)}
+  .beat.hero .hint{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.4em;
+    text-transform:uppercase;opacity:.85;display:flex;flex-direction:column;align-items:center;gap:12px;
+    text-shadow:0 1px 12px rgba(244,236,223,.6)}
+  .beat.hero .hint::after{content:'';width:1px;height:44px;background:linear-gradient(var(--noir),transparent);
+    animation:drip 2.2s ease-in-out infinite}
+  @keyframes drip{0%{transform:scaleY(0);transform-origin:top}55%{transform:scaleY(1);transform-origin:top}56%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+  .beat.finale{align-items:flex-start;text-align:left;padding-left:clamp(26px,9vw,130px)}
+  .beat.finale::before{content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(100deg, rgba(23,17,11,.56) 0%, rgba(23,17,11,.26) 46%, transparent 70%)}
+  .beat.finale>*{position:relative}
+  .beat.finale .cta-big{pointer-events:auto;margin-top:34px;display:inline-block;font-size:12px;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--noir);background:var(--gold);padding:18px 42px;border-radius:99px;text-decoration:none;
+    transition:transform var(--t-quick) ease, box-shadow .3s ease;box-shadow:0 8px 40px rgba(201,164,92,.35)}
+  .beat.finale .cta-big:hover{transform:translateY(-2px);box-shadow:0 14px 54px rgba(201,164,92,.5)}
+  /* мобильный финал: текст и CTA — в нижнюю треть, вертикальный скрим на всю ширину,
+     чтобы конверсионный момент не гас на янтарном флаконе в центре узкого экрана */
+  @media(max-width:640px){
+    .beat.finale{align-items:flex-start;justify-content:flex-end;padding:0 24px 96px}
+    .beat.finale::before{background:linear-gradient(to top, rgba(23,17,11,.62) 0%, var(--ink-25) 45%, transparent 70%)}
+  }
+
+  /* ---------- КОНТЕНТ ПОСЛЕ ФИЛЬМА ---------- */
+  #landing{height:52vh;background:linear-gradient(to bottom, var(--seam), var(--cream));position:relative;z-index:2}
+  main{position:relative;z-index:2;background:var(--cream);color:var(--noir)}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(20px,4vw,54px)}
+  .section{padding:110px 0}
+  .section .label{font-size:11px;letter-spacing:.5em;text-transform:uppercase;color:var(--amber);margin-bottom:18px}
+  .section h3{font-family:var(--serif);font-weight:400;font-size:clamp(30px,3.5vw,54px);line-height:1.18;margin-bottom:56px;
+    text-wrap:balance;max-width:22ch}
+  .section h3 em{font-style:normal;color:var(--amber)}
+
+  .rituals{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ink-14)}
+  @media(max-width:1100px){.rituals{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.rituals{grid-template-columns:1fr}}
+  .ritual{background:var(--cream);padding:40px 30px 46px;position:relative;transition:background var(--t-soft) ease;
+    display:flex;flex-direction:column;align-items:flex-start}
+  .ritual .meta{margin-top:auto}
+  .ritual:hover{background:var(--cream-deep)}
+  .ritual .num{font-family:var(--serif);font-size:46px;color:var(--gold);line-height:1;margin-bottom:22px}
+  .ritual h4{font-family:var(--serif);font-weight:400;font-size:23px;margin-bottom:12px}
+  .ritual p{font-size:13.5px;line-height:1.75;opacity:.72;margin-bottom:24px}
+  .ritual .meta{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);white-space:nowrap}
+  .ritual .book{display:inline-block;margin-top:20px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--noir);text-decoration:none;border-bottom:1px solid var(--gold);padding-bottom:4px;transition:color .3s}
+  .ritual .book:hover{color:var(--amber)}
+  .ritual .book i{display:inline-block;font-style:normal;transition:transform var(--t-quick) ease}
+  .ritual .book:hover i{transform:translateX(5px)}
+
+  /* ---------- АТЕЛЬЕ В ЦИФРАХ: нуар-лента — золото звучит в полную силу ---------- */
+  #chiffres{padding:0}
+  #chiffres .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(244,236,223,.16)}
+  @media(max-width:880px){#chiffres .strip{grid-template-columns:repeat(2,1fr)}}
+  .chiffre{background:var(--noir);text-align:center;padding:58px 20px 54px}
+  .chiffre .val{font-family:var(--serif);font-weight:400;font-size:clamp(40px,4.2vw,60px);
+    line-height:1;color:var(--gold);display:block;font-variant-numeric:tabular-nums}
+  .chiffre .cap{display:block;margin-top:14px;font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--cream);opacity:.8}
+
+  .artists{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:44px}
+  .artist .portrait{aspect-ratio:3/4;background:linear-gradient(160deg,#E9E0CF,#D9CBB2);border-radius:2px;display:flex;
+    align-items:center;justify-content:center;margin-bottom:22px;overflow:hidden}
+  .artist .portrait img{width:100%;height:100%;object-fit:cover;display:block;
+    transition:transform .6s var(--e-out)}
+  .artist:hover .portrait img{transform:scale(1.04)}
+  .artist h4{font-family:var(--serif);font-weight:400;font-size:23px;margin-bottom:6px}
+  .artist p{font-size:13px;line-height:1.7;opacity:.7}
+
+  #manifesto{color:var(--cream);background:var(--noir)}
+  #manifesto.bg{background:
+    linear-gradient(rgba(23,17,11,.5), rgba(23,17,11,.5)),
+    var(--noir) url("img/manifesto-silk.jpg") center/cover no-repeat}
+  #manifesto blockquote{font-family:var(--serif);font-weight:400;font-size:clamp(24px,3vw,46px);line-height:1.42;max-width:900px}
+  #manifesto blockquote em{font-style:normal;color:var(--gold)}
+  #manifesto figcaption{margin-top:34px;font-size:11px;letter-spacing:.4em;text-transform:uppercase;opacity:.55}
+
+  /* ---------- ОТЗЫВЫ ---------- */
+  .confidences{display:grid;grid-template-columns:repeat(3,1fr);gap:54px}
+  @media(max-width:880px){.confidences{grid-template-columns:1fr;gap:44px}}
+  .confidence{position:relative;padding-top:58px}
+  .confidence::before{content:'«';position:absolute;top:-26px;left:-6px;font-family:var(--serif);
+    font-size:72px;line-height:1;color:var(--gold)}
+  .confidence p{font-family:var(--serif);font-weight:400;font-size:18.5px;line-height:1.68;margin-bottom:20px}
+  .confidence .who{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber)}
+
+  /* ---------- FAQ ---------- */
+  #faq .qa{border-bottom:1px solid var(--ink-18)}
+  #faq .qa:first-of-type{border-top:1px solid var(--ink-18)}
+  #faq summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;gap:26px;
+    padding:26px 0;font-family:var(--serif);font-weight:400;font-size:clamp(19px,2vw,24px);transition:color var(--t-quick) ease}
+  #faq summary:hover{color:var(--amber)}
+  #faq summary::-webkit-details-marker{display:none}
+  #faq summary .ic{flex:none;width:12px;height:12px;position:relative;transform:translateY(-1px)}
+  #faq summary .ic::before,#faq summary .ic::after{content:'';position:absolute;background:var(--amber);inset:0;margin:auto}
+  #faq summary .ic::before{width:12px;height:1px}
+  #faq summary .ic::after{width:1px;height:12px;transition:transform var(--t-quick) ease}
+  #faq .qa[open] summary .ic::after{transform:scaleY(0)}
+  #faq .qa .a{max-width:760px;padding:0 0 28px;font-size:14.5px;line-height:1.9;opacity:.78;
+    animation:faqIn var(--t-soft) var(--e-out)}
+  @keyframes faqIn{from{opacity:0;transform:translateY(-6px)}to{opacity:.78;transform:none}}
+
+  #booking .grid{display:grid;grid-template-columns:1fr 1fr;gap:70px}
+  @media(max-width:880px){#booking .grid{grid-template-columns:1fr}}
+  #booking form{display:flex;flex-direction:column;gap:0}
+  #booking .field{position:relative;padding:26px 0 14px;border-bottom:1px solid var(--ink-55)}
+  #booking ::placeholder{color:var(--amber);opacity:1}
+  #booking input,#booking select{width:100%;border:0;background:transparent;font-family:var(--sans);font-weight:300;
+    font-size:16px;color:var(--noir);outline:none;appearance:none}
+  #booking select{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238A5A2B' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 4px center/12px;padding-right:26px;cursor:pointer}
+  #booking label{position:absolute;top:0;left:0;font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);
+    transition:color var(--t-quick) ease}
+  #booking .field{transition:border-color var(--t-soft) ease, box-shadow var(--t-soft) ease}
+  /* видимый фокус в родном языке формы: янтарный волосок удваивается */
+  #booking .field:focus-within{border-bottom-color:var(--amber);box-shadow:0 1px 0 var(--amber)}
+  #booking .field:focus-within label{color:var(--noir)}
+  #booking .field.err{border-bottom-color:var(--err)}
+  #booking .field .msg{position:absolute;right:0;top:2px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--err);display:none}
+  #booking .field.err .msg{display:block}
+  /* поля уходят мягко — грубый выруб не должен предварять каллиграфию галочки */
+  #bookForm{min-height:300px}
+  #bookForm > .field,#bookForm > button{transition:border-color var(--t-soft) ease, box-shadow var(--t-soft) ease, background .3s,
+    opacity .35s ease, transform var(--t-quick) ease}
+  #bookForm.sent > .field,#bookForm.sent > button{opacity:0;transform:translateY(-8px);pointer-events:none}
+  #booking form > button{margin-top:44px;align-self:flex-start;font-family:var(--sans);font-size:12px;letter-spacing:.3em;
+    text-transform:uppercase;background:var(--noir);color:var(--cream);border:0;padding:18px 42px;border-radius:99px;
+    cursor:pointer;transition:background var(--t-quick),transform var(--t-quick)}
+  #booking form > button:hover{background:var(--amber);transform:translateY(-2px)}
+  #booking .thanks{display:none;padding-top:10px}
+  #booking .thanks.show{display:block;animation:fadeUp .7s ease}
+  .thanks .ok{width:60px;height:60px;margin-bottom:20px}
+  .thanks .ok circle{stroke:var(--gold);stroke-width:1.5;fill:none;stroke-dasharray:200;stroke-dashoffset:200;animation:okDraw 1s .15s ease forwards}
+  .thanks .ok path{stroke:var(--gold);stroke-width:2;fill:none;stroke-dasharray:44;stroke-dashoffset:44;animation:okDraw .6s .9s ease forwards}
+  @keyframes okDraw{to{stroke-dashoffset:0}}
+  .thanks h4{font-family:var(--serif);font-weight:400;font-size:30px;color:var(--amber);margin-bottom:12px}
+  .thanks p{font-size:14px;line-height:1.85;opacity:.75}
+  .thanks .note{font-size:12px;opacity:.55;margin-top:14px}
+  .thanks .tlink{margin-top:18px;display:inline-block;background:none;border:0;padding:0;cursor:pointer;
+    font-family:var(--sans);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--amber);
+    border-bottom:1px solid var(--gold);padding-bottom:4px;transition:color .3s}
+  .thanks .tlink:hover{color:var(--noir)}
+  .nowrap{white-space:nowrap}
+  #booking .info p{font-size:14.5px;line-height:2.05;opacity:.78}
+  #booking .info strong{font-weight:500}
+  a.tel{color:inherit;text-decoration:none;white-space:nowrap;border-bottom:1px solid var(--ink-25);
+    transition:border-color var(--t-quick), color var(--t-quick)}
+  a.tel:hover{color:var(--amber);border-color:var(--amber)}
+
+  /* ---------- ЛОКАЦИЯ / КАРТА ---------- */
+  #location .mapwrap{position:relative;height:480px;border-radius:2px;overflow:hidden;
+    box-shadow:0 20px 60px rgba(23,17,11,.12)}
+  @media(max-width:640px){#location .mapwrap{height:360px}}
+  #map{position:absolute;inset:0}
+  #map canvas{filter:sepia(.12) saturate(.92)}
+  /* пока библиотека карты не приехала (или не смогла) — текстовая заглушка с адресом */
+  .map-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    text-align:center;font-size:14.5px;line-height:2;letter-spacing:.06em;color:var(--noir);background:#EDE3D2}
+  .mapwrap .map-controls{display:none}
+  .mapwrap.live .map-controls{display:flex}
+  .lume-pin{position:relative;width:22px;height:22px;cursor:pointer}
+  .lume-pin::before{content:'';position:absolute;inset:0;border-radius:50%;background:var(--gold);
+    opacity:.35;animation:pinpulse 2.4s ease-out infinite}
+  .lume-pin::after{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--gold);
+    border:2px solid #fff;box-shadow:0 2px 10px rgba(23,17,11,.35)}
+  @keyframes pinpulse{0%{transform:scale(.6);opacity:.5}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
+  @media (prefers-reduced-motion: reduce){.lume-pin::before{animation:none;opacity:0}}
+  .maplibregl-popup-content{font-family:var(--sans);background:var(--cream);color:var(--noir);
+    border-radius:6px;box-shadow:0 10px 40px var(--ink-25);padding:16px 18px;line-height:1.7}
+  .maplibregl-popup-content strong{font-family:var(--serif);font-weight:400;font-size:17px;letter-spacing:.06em}
+  .maplibregl-popup-tip{border-top-color:var(--cream) !important;border-bottom-color:var(--cream) !important}
+  .maplibregl-popup-close-button{display:none}
+  .map-controls{position:absolute;right:12px;bottom:34px;z-index:5;display:flex;flex-direction:column;
+    border-radius:8px;overflow:hidden;box-shadow:0 6px 24px var(--ink-18);border:1px solid rgba(23,17,11,.12)}
+  .map-controls button{width:36px;height:36px;border:0;background:var(--cream);color:var(--noir);
+    font-size:18px;cursor:pointer;transition:background var(--t-quick);display:flex;align-items:center;justify-content:center}
+  .map-controls button:hover{background:var(--cream-press)}
+  .map-controls button+button{border-top:1px solid rgba(23,17,11,.12)}
+  #location .route-btn{margin-top:26px;display:inline-block;font-size:12px;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--cream);background:var(--noir);padding:18px 42px;border-radius:99px;
+    text-decoration:none;transition:background var(--t-quick),transform var(--t-quick)}
+  #location .route-btn:hover{background:var(--amber);transform:translateY(-2px)}
+
+  footer{background:var(--noir);color:var(--cream);padding:64px 0}
+  footer .row{display:flex;align-items:center;justify-content:space-between;gap:26px;flex-wrap:wrap}
+  footer .lockup svg{height:22px;fill:var(--cream)}
+  footer .socials{display:flex;gap:18px}
+  footer .socials a{color:var(--cream);opacity:.65;transition:opacity var(--t-quick), color var(--t-quick)}
+  footer .socials a:hover{opacity:1;color:var(--gold)}
+  footer .socials svg{width:20px;height:20px;fill:currentColor}
+  footer .fine{margin-top:30px;font-size:11px;letter-spacing:.14em;opacity:.6}
+
+  /* доступность: видимый фокус с клавиатуры — янтарь на светлом, золото на тёмном */
+  a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible{
+    outline:2px solid var(--amber);outline-offset:3px;border-radius:2px}
+  #manifesto :focus-visible,footer :focus-visible,#chiffres :focus-visible,#stage :focus-visible{
+    outline-color:var(--gold)}
+
+  @media (prefers-reduced-motion: reduce){
+    .beat.hero .hint::after{animation:none}
+    .thanks .ok circle,.thanks .ok path{animation:none;stroke-dashoffset:0}
+    #faq .qa .a{animation:none}
+  }
+</style>
+<noscript><style>
+  /* без JS: фильм и счётчики скрыты, контент виден сразу */
+  #loader,#film,#landing,#chiffres{display:none}
+  header{color:var(--noir)}
+  #manifesto{background:linear-gradient(rgba(23,17,11,.5),rgba(23,17,11,.5)),
+    #17110B url("img/manifesto-silk.jpg") center/cover no-repeat}
+</style></noscript>
+
+<!-- Schema.org: салон красоты с услугами (для Google и AI-поисковиков) -->
+
+
+<!-- Schema.org: FAQ (зеркалит видимую секцию Questions & Réponses) -->
+
+</head>
+<body>
+
+<!-- ЗАГРУЗЧИК: только шкала — вордмарк появляется один раз, в хиро, уже с настоящим шрифтом -->
+<div id="loader">
+  <div class="bar"><i id="loadBar"></i></div>
+  <div class="pct" id="loadPct">0%</div>
+</div>
+
+<!-- ШАПКА -->
+<header id="hdr">
+  <a class="lockup" href="#" aria-label="LUMÉ — наверх">
+    <svg viewBox="0 0 170 42" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <text x="0" y="31" font-family="Prata, Georgia adj, Georgia, serif" font-weight="400" font-size="27" letter-spacing="6">LUM&#201;</text>
+      <circle cx="110" cy="8" r="2" fill="#C9A45C"/>
+    </svg>
+    <span class="sub">Atelier de beauté</span>
+  </a>
+  <div id="chapter">
+    <span id="chapterName">Chapitre 01 · Crème</span>
+    <div class="track"><i id="chapterBar"></i></div>
+  </div>
+  <div class="hright">
+    <a class="quick" href="#rituals">Услуги</a>
+    <a class="cta" href="#booking">Записаться</a>
+  </div>
+</header>
+
+<!-- ФИЛЬМ -->
+<div id="film">
+  <div id="stage">
+    <canvas id="screen"></canvas>
+    <canvas id="ambient"></canvas>
+    <div id="dim"></div>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+
+    <div class="beat hero" data-in="-0.1" data-peak="0" data-out="0.045" data-dim="0.55">
+      <div class="wordmark">
+        <svg viewBox="0 0 340 84" xmlns="http://www.w3.org/2000/svg" aria-label="LUMÉ">
+          <text x="50%" y="58" text-anchor="middle" font-family="Prata, Georgia adj, Georgia, serif" font-weight="400" font-size="56" letter-spacing="12" fill="currentColor">LUM&#201;</text>
+          <circle cx="283" cy="11" r="3" fill="#C9A45C"/>
+        </svg>
+      </div>
+      <div class="tag">Atelier de beauté</div>
+      <div class="hint">Листайте</div>
+    </div>
+
+    <div class="beat" data-in="0.05" data-peak="0.105" data-out="0.17">
+      <div class="kicker">Chapitre 01 · Crème</div>
+      <h2>Уход, который начинается<br>с <em>прикосновения</em></h2>
+    </div>
+    <div class="beat" data-in="0.24" data-peak="0.305" data-out="0.37">
+      <div class="kicker">Chapitre 02 · Poudre</div>
+      <h2>Сияние — наше <em>ремесло</em></h2>
+    </div>
+    <div class="beat" data-in="0.44" data-peak="0.505" data-out="0.57">
+      <div class="kicker">Chapitre 03 · Soie</div>
+      <h2>Шёлк, который<br>узнаёт <em>кожу</em></h2>
+    </div>
+    <div class="beat" data-in="0.64" data-peak="0.705" data-out="0.77">
+      <div class="kicker">Chapitre 04 · Goutte</div>
+      <h2>Одна капля<br>меняет <em>всё</em></h2>
+    </div>
+    <div class="beat finale" data-in="0.86" data-peak="0.935" data-out="2" data-dim="0.6">
+      <div class="kicker">Chapitre 05 · Atelier</div>
+      <h2>Добро пожаловать<br>в <em>ателье</em></h2>
+      <a class="cta-big" href="#booking">Записаться на визит</a>
+    </div>
+
+    <div id="fadeBottom"></div>
+    <a class="skip" id="skipFilm" href="#rituals">Пропустить фильм ↓</a>
+  </div>
+</div>
+
+<!-- ПОСАДКА: шов фильма → крем -->
+<div id="landing" aria-hidden="true"></div>
+
+<main>
+  <!-- УСЛУГИ -->
+  <section class="section" id="rituals">
+    <div class="wrap">
+      <div class="label">Les Rituels</div>
+      <h3>Четыре ритуала, <em>один</em> результат — вы сияете</h3>
+      <div class="rituals">
+        <div class="ritual">
+          <div class="num">I</div>
+          <h4>Ритуал сияния</h4>
+          <p>Уход за лицом с золотым пилингом: кожа дышит, тон выравнивается, свет возвращается.</p>
+          <div class="meta">90 минут · от 700&nbsp;000 сум</div>
+          <a class="book" href="#booking" data-ritual="Ритуал сияния">Записаться <i aria-hidden="true">→</i></a>
+        </div>
+        <div class="ritual">
+          <div class="num">II</div>
+          <h4>Шёлковые волосы</h4>
+          <p>Глубокое восстановление и укладка. Волосы, к которым тянутся руки — и не только ваши.</p>
+          <div class="meta">120 минут · от 950&nbsp;000 сум</div>
+          <a class="book" href="#booking" data-ritual="Шёлковые волосы">Записаться <i aria-hidden="true">→</i></a>
+        </div>
+        <div class="ritual">
+          <div class="num">III</div>
+          <h4>Руки как в кино</h4>
+          <p>Спа-маникюр с парафином: тепло, тишина и идеальные линии.</p>
+          <div class="meta">60 минут · от 450&nbsp;000 сум</div>
+          <a class="book" href="#booking" data-ritual="Руки как в кино">Записаться <i aria-hidden="true">→</i></a>
+        </div>
+        <div class="ritual">
+          <div class="num">IV</div>
+          <h4>Вечерний образ</h4>
+          <p>Макияж и причёска под событие. Выходите — уже главная героиня вечера.</p>
+          <div class="meta">90 минут · от 1&nbsp;200&nbsp;000 сум</div>
+          <a class="book" href="#booking" data-ritual="Вечерний образ">Записаться <i aria-hidden="true">→</i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- АТЕЛЬЕ В ЦИФРАХ -->
+  <section id="chiffres" aria-label="Ателье в цифрах">
+    <div class="strip">
+      <div class="chiffre" data-target="12">
+        <span class="val">0</span>
+        <span class="cap">лет мастерства</span>
+      </div>
+      <div class="chiffre" data-target="4800" data-suffix="+">
+        <span class="val">0</span>
+        <span class="cap">сияющих гостей</span>
+      </div>
+      <div class="chiffre" data-target="97" data-suffix="%">
+        <span class="val">0</span>
+        <span class="cap">приходят снова</span>
+      </div>
+      <div class="chiffre" data-target="15">
+        <span class="val">0</span>
+        <span class="cap">минут до нашего звонка</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- МАСТЕРА -->
+  <section class="section" id="artists">
+    <div class="wrap">
+      <div class="label">Les Artistes</div>
+      <h3>Мастера, которым <em>доверяют</em> лицо</h3>
+      <div class="artists">
+        <div class="artist">
+          <div class="portrait"><img src="img/artist-alina.jpg" alt="Алина — стилист-парикмахер LUMÉ" loading="lazy"></div>
+          <h4>Алина</h4>
+          <p>Стилист-парикмахер, 12 лет практики. Про неё говорят: «шёлк в руках».</p>
+        </div>
+        <div class="artist">
+          <div class="portrait"><img src="img/artist-mari.jpg" alt="Мари — визажист LUMÉ" loading="lazy"></div>
+          <h4>Мари</h4>
+          <p>Визажист. Обложки, показы — и ваш лучший день.</p>
+        </div>
+        <div class="artist">
+          <div class="portrait"><img src="img/artist-sofi.jpg" alt="Софи — эстетист LUMÉ" loading="lazy"></div>
+          <h4>Софи</h4>
+          <p>Эстетист, автор «ритуала сияния». Кожа слушается её с первого сеанса.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- МАНИФЕСТ -->
+  <section class="section" id="manifesto">
+    <div class="wrap">
+      <figure>
+        <blockquote>LUMÉ — это час тишины в центре города. Мы не «наводим красоту» — мы возвращаем вам <em>ваш собственный свет</em>.</blockquote>
+        <figcaption>— Манифест ателье</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ОТЗЫВЫ -->
+  <section class="section" id="confidences">
+    <div class="wrap">
+      <div class="label">Les Confidences</div>
+      <h3>Что говорят <em>после</em> ритуала</h3>
+      <div class="confidences">
+        <div class="confidence">
+          <p>Пришла на час — осталась жить. Кожа светится третью неделю, и это заметили все, кроме меня: я просто привыкла.</p>
+          <div class="who">Камила · Ритуал сияния</div>
+        </div>
+        <div class="confidence">
+          <p>Тишина, кофе, руки Алины. Впервые вышла из салона без единого желания что-то переделать.</p>
+          <div class="who">Диёра · Шёлковые волосы</div>
+        </div>
+        <div class="confidence">
+          <p>Готовили меня к свадьбе. Мама заплакала, жених забыл текст клятвы. Лучший отзыв, который я могу оставить.</p>
+          <div class="who">Севара · Вечерний образ</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЗАПИСЬ -->
+  <section class="section" id="booking">
+    <div class="wrap">
+      <div class="label">Rendez-vous</div>
+      <h3>Оставьте заявку — <em>перезвоним</em> за 15&nbsp;минут</h3>
+      <div class="grid">
+        <form id="bookForm" novalidate>
+          <div class="field">
+            <label for="fName">Имя</label>
+            <input id="fName" type="text" autocomplete="name" placeholder="Как к вам обращаться" aria-describedby="fNameMsg">
+            <span class="msg" id="fNameMsg" role="alert">Подскажите имя</span>
+          </div>
+          <div class="field">
+            <label for="fPhone">Телефон</label>
+            <input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+998 __ ___ __ __" aria-describedby="fPhoneMsg">
+            <span class="msg" id="fPhoneMsg" role="alert">Проверьте номер</span>
+          </div>
+          <div class="field">
+            <label for="fRitual">Ритуал</label>
+            <select id="fRitual">
+              <option>Ритуал сияния</option>
+              <option>Шёлковые волосы</option>
+              <option>Руки как в кино</option>
+              <option>Вечерний образ</option>
+              <option>Ещё выбираю — посоветуйте</option>
+            </select>
+          </div>
+          <button type="submit">Оставить заявку</button>
+          <div class="thanks" id="thanks" role="status" aria-live="polite" tabindex="-1">
+            <svg class="ok" viewBox="0 0 64 64" aria-hidden="true">
+              <circle cx="32" cy="32" r="30"/>
+              <path d="M20 33 L28.5 41.5 L44 25"/>
+            </svg>
+            <h4 id="thanksTitle">Мерси!</h4>
+            <p>Перезвоним на <span class="nowrap" id="thanksPhone"></span><br>в течение 15&nbsp;минут — подберём время и ответим на вопросы.</p>
+            <p class="note">Пока это демонстрация интерфейса: в рабочей версии заявка мгновенно уходит администратору.</p>
+            <button type="button" class="tlink" id="editReq">← Изменить заявку</button>
+          </div>
+        </form>
+        <div class="info">
+          <p>
+            <strong>Адрес.</strong> Ташкент, ул.&nbsp;Шёлковая,&nbsp;5<br>
+            <strong>Часы.</strong> Ежедневно 10:00–21:00<br>
+            <strong>Телефон.</strong> <a class="tel" href="tel:+998712000000">+998&nbsp;71&nbsp;200&nbsp;00&nbsp;00</a><br><br>
+            Парковка во дворе, кофе — за наш счёт,<br>
+            телефон можно не доставать вовсе.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЛОКАЦИЯ -->
+  <section class="section" id="location">
+    <div class="wrap">
+      <div class="label">Où nous trouver</div>
+      <h3>Нас легко найти — <em>сложно</em> забыть</h3>
+      <div class="mapwrap">
+        <div id="map" aria-label="Карта: LUMÉ, Ташкент, ул. Шёлковая, 5">
+          <div class="map-fallback">Ташкент, ул.&nbsp;Шёлковая,&nbsp;5<br>Ежедневно 10:00–21:00</div>
+        </div>
+        <div class="map-controls">
+          <button type="button" id="mapZoomIn" aria-label="Приблизить">+</button>
+          <button type="button" id="mapZoomOut" aria-label="Отдалить">−</button>
+        </div>
+      </div>
+      <a class="route-btn" href="https://maps.google.com/?q=41.3111,69.2797" target="_blank" rel="noopener">Проложить маршрут</a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="label">Questions &amp; Réponses</div>
+      <h3>Всё, что спрашивают <em>перед</em> визитом</h3>
+      <details class="qa">
+        <summary>Как записаться?<span class="ic" aria-hidden="true"></span></summary>
+        <div class="a">Оставьте имя и телефон в <a href="#booking">форме выше</a> — перезвоним в течение 15&nbsp;минут и подберём удобное время. Или позвоните напрямую: <a class="tel" href="tel:+998712000000">+998&nbsp;71&nbsp;200&nbsp;00&nbsp;00</a>.</div>
+      </details>
+      <details class="qa">
+        <summary>Сколько длится визит?<span class="ic" aria-hidden="true"></span></summary>
+        <div class="a">От 60 до 120 минут в зависимости от ритуала; точная длительность — в описании каждого ритуала. Мы начинаем вовремя и не заставляем ждать.</div>
+      </details>
+      <details class="qa">
+        <summary>Можно прийти без записи?<span class="ic" aria-hidden="true"></span></summary>
+        <div class="a">Можно, но не обещаем свободного мастера: ателье камерное, всего несколько кресел. Запись надёжнее — тем более что это две минуты.</div>
+      </details>
+      <details class="qa">
+        <summary>Нужна ли предоплата?<span class="ic" aria-hidden="true"></span></summary>
+        <div class="a">Нет. Достаточно имени и телефона. Перенести или отменить визит можно за 3&nbsp;часа — просто предупредите.</div>
+      </details>
+      <details class="qa">
+        <summary>Какая косметика в работе?<span class="ic" aria-hidden="true"></span></summary>
+        <div class="a">Профессиональные линии Франции и Кореи; составы подбираются под вашу кожу. Об аллергии или беременности предупредите при записи — мастер всё учтёт.</div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="row">
+      <div class="lockup">
+        <svg viewBox="0 0 170 42" xmlns="http://www.w3.org/2000/svg" aria-label="LUMÉ">
+          <text x="0" y="31" font-family="Prata, Georgia adj, Georgia, serif" font-weight="400" font-size="27" letter-spacing="6" fill="#F4ECDF">LUM&#201;</text>
+          <circle cx="110" cy="8" r="2" fill="#C9A45C"/>
+        </svg>
+      </div>
+      <div class="socials">
+        <a href="#" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.72 3.72 0 0 1-1.38-.9 3.72 3.72 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.8.31-1.47.72-2.14 1.4A5.9 5.9 0 0 0 .63 4.13C.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.8.72 1.47 1.4 2.14a5.9 5.9 0 0 0 2.13 1.4c.77.3 1.64.5 2.92.56 1.27.06 1.68.07 4.94.07s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56a5.9 5.9 0 0 0 2.14-1.4 5.9 5.9 0 0 0 1.4-2.13c.3-.77.5-1.65.56-2.92.06-1.27.07-1.68.07-4.94s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91a5.9 5.9 0 0 0-1.4-2.14A5.9 5.9 0 0 0 19.87.63c-.77-.3-1.65-.5-2.92-.56C15.67.01 15.26 0 12 0Zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84Zm0 10.15A4 4 0 1 1 16 12a4 4 0 0 1-4 4ZM19.85 4.6a1.44 1.44 0 1 1-1.44-1.44 1.44 1.44 0 0 1 1.44 1.44Z"/></svg>
+        </a>
+        <a href="#" aria-label="Telegram">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.94 0A12 12 0 1 0 24 12 12 12 0 0 0 11.94 0Zm5.87 8.16-1.97 9.3c-.15.66-.54.82-1.09.51l-3-2.21-1.45 1.4a.76.76 0 0 1-.6.29l.21-3.06 5.57-5.03c.24-.21-.05-.33-.38-.12l-6.88 4.33-2.97-.93c-.64-.2-.66-.64.14-.95l11.6-4.47c.54-.2 1.01.12.82.94Z"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="fine">© LUMÉ, 2026</div>
+  </div>
+<p style="margin:24px auto 0;max-width:560px;padding:0 20px;font:12px/1.6 var(--sans);text-align:center;opacity:.75">Демонстрационный проект. Данные салона вымышлены. Форма не отправляет заявки.</p>
+</footer>
+
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+/* ============ LUMÉ scroll-film engine ============ */
+const FRAME_COUNT = 301;
+const framePath = i => `./frames/f_${String(i+1).padStart(4,'0')}.jpg`;
+
+const $ = s => document.querySelector(s);
+const screenCv = $('#screen'), sctx = screenCv.getContext('2d');
+const filmEl = $('#film'), hdr = $('#hdr');
+const beats = [...document.querySelectorAll('.beat')].map(el => ({
+  el, in:+el.dataset.in, peak:+el.dataset.peak, out:+el.dataset.out,
+  /* сколько притемнения просит бит: хиро и финал скромнее — у них крупный текст и свой скрим */
+  dim: el.dataset.dim === undefined ? 1 : +el.dataset.dim
+}));
+const chapters = ['Chapitre 01 · Crème','Chapitre 02 · Poudre','Chapitre 03 · Soie','Chapitre 04 · Goutte','Chapitre 05 · Atelier'];
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* -------- ?jump= дев-контракт -------- */
+const JUMP = new URLSearchParams(location.search).get('jump');
+if (JUMP !== null) history.scrollRestoration = 'manual';
+
+/* -------- Lenis (плавный скролл), с фолбэком -------- */
+let lenis = null;
+if (typeof Lenis !== 'undefined' && JUMP === null && !reduceMotion){
+  lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+  const raf = t => { lenis.raf(t); requestAnimationFrame(raf) };
+  requestAnimationFrame(raf);
+}
+
+/* -------- загрузка кадров: насос с ограничением -------- */
+const images = new Array(FRAME_COUNT).fill(null);
+let loaded = 0, loadedNeed = 0;
+const PUMP = 10;
+const NEED = Math.min(FRAME_COUNT, 24); /* стартовый буфер; шкала лоадера нормирована на него */
+/* порядок насоса: стартовый буфер → каждый 8-й по всей ленте (грубое покрытие
+   для глубоких прыжков, промах nearestFrame ≤ ±4) → дозаполнение остального */
+const ORDER = (() => {
+  const o = [], seen = new Set();
+  const take = i => { if (!seen.has(i)){ seen.add(i); o.push(i); } };
+  for (let i = 0; i < NEED; i++) take(i);
+  for (let i = 0; i < FRAME_COUNT; i += 8) take(i);
+  for (let i = 0; i < FRAME_COUNT; i++) take(i);
+  return o;
+})();
+let nextIdx = 0;
+function pump(onProgress, onDone){
+  let inFlight = 0;
+  const settle = (i, img) => {
+    loaded++;
+    if (i < NEED) loadedNeed++;
+    images[i] = img;
+    onProgress(Math.min(1, loadedNeed / NEED));
+    if (loaded === FRAME_COUNT) onDone();
+    else kick();
+  };
+  const load = (i, attempt) => {
+    inFlight++;
+    const img = new Image();
+    img.onload = () => { inFlight--; settle(i, img); };
+    img.onerror = () => {
+      inFlight--;
+      /* сорвавшийся кадр не хороним сразу: одна повторная попытка с паузой */
+      if (attempt < 2) setTimeout(() => load(i, attempt + 1), 400);
+      else settle(i, null);
+      kick();
+    };
+    img.src = framePath(i);
+  };
+  const kick = () => { while (inFlight < PUMP && nextIdx < ORDER.length) load(ORDER[nextIdx++], 1); };
+  kick();
+}
+function nearestFrame(idx){
+  if (images[idx]) return images[idx];
+  for (let d = 1; d < FRAME_COUNT; d++){
+    if (images[idx-d]) return images[idx-d];
+    if (images[idx+d]) return images[idx+d];
+  }
+  return null;
+}
+
+/* -------- ImageBitmap скользящее окно (анти-джанк) -------- */
+const bitmaps = new Map(), decoding = new Set();
+let B_AHEAD = 18, B_KEEP = 28;
+if ((navigator.deviceMemory || 8) <= 4){ B_AHEAD = 10; B_KEEP = 16; } /* слабым устройствам — окно поуже */
+let bmpCenter = -999, displayed = -1;
+function ensureBitmaps(center){
+  if (Math.abs(center - bmpCenter) < 3) return;
+  bmpCenter = center;
+  const lo = Math.max(0, center - B_AHEAD), hi = Math.min(FRAME_COUNT-1, center + B_AHEAD);
+  for (let i = lo; i <= hi; i++){
+    if (bitmaps.has(i) || decoding.has(i) || !images[i]) continue;
+    decoding.add(i);
+    createImageBitmap(images[i]).then(b => {
+      decoding.delete(i);
+      if (Math.abs(i - bmpCenter) > B_KEEP){ b.close(); return; }
+      bitmaps.set(i, b);
+      if (i === displayed) drawFrame(i, true);
+    }).catch(() => decoding.delete(i));
+  }
+  for (const k of [...bitmaps.keys()])
+    if (k < center - B_KEEP || k > center + B_KEEP){ bitmaps.get(k).close(); bitmaps.delete(k); }
+}
+
+/* -------- канвас: размер и отрисовка cover -------- */
+let CW = 0, CH = 0;
+const DPR = Math.min(devicePixelRatio || 1, 1.5);
+function sizeCanvases(){
+  CW = innerWidth; CH = innerHeight;
+  for (const cv of [screenCv, ambCv]){
+    cv.width = CW * DPR; cv.height = CH * DPR;
+    cv.getContext('2d').setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  drawFrame(displayed >= 0 ? displayed : 0, true);
+}
+function drawFrame(idx, force){
+  if (idx === displayed && !force) return;
+  const src = bitmaps.get(idx) || nearestFrame(idx);
+  if (!src) return;
+  displayed = idx;
+  const iw = src.width, ih = src.height;
+  const s = Math.max(CW/iw, CH/ih);
+  const dw = iw*s, dh = ih*s;
+  sctx.drawImage(src, (CW-dw)/2, (CH-dh)/2, dw, dh);
+}
+
+/* -------- эмбиент: золотая пыльца поверх хиро -------- */
+const ambCv = $('#ambient'), actx = ambCv.getContext('2d');
+let sprite = null, parts = [];
+function makeSprite(){
+  sprite = document.createElement('canvas');
+  sprite.width = sprite.height = 32;
+  const c = sprite.getContext('2d');
+  const g = c.createRadialGradient(16,16,0,16,16,16);
+  g.addColorStop(0,'rgba(255,232,180,1)'); g.addColorStop(.35,'rgba(232,196,120,.55)'); g.addColorStop(1,'rgba(232,196,120,0)');
+  c.fillStyle = g; c.fillRect(0,0,32,32);
+}
+function makeParts(){
+  parts = Array.from({length: 64}, () => ({
+    x: Math.random()*CW, y: Math.random()*CH,
+    z: .3 + Math.random()*.7, ph: Math.random()*Math.PI*2,
+    vx: .08 + Math.random()*.22, vy: -(.05 + Math.random()*.18)
+  }));
+}
+let ambAlpha = 1;
+function drawAmbient(t){
+  actx.clearRect(0,0,CW,CH);
+  if (ambAlpha <= 0.005 || reduceMotion || !sprite) return;
+  for (const p of parts){
+    p.x += p.vx*p.z; p.y += p.vy*p.z;
+    if (p.x > CW+20) p.x = -20; if (p.y < -20) p.y = CH+20;
+    const tw = .5 + .5*Math.sin(t*.0016 + p.ph);
+    const s = 5 + 15*p.z*tw;
+    actx.globalAlpha = ambAlpha * (.14 + .5*tw*p.z);
+    actx.drawImage(sprite, p.x-s/2, p.y-s/2, s, s);
+  }
+  actx.globalAlpha = 1;
+}
+
+/* -------- адаптивная шапка: светлый кадр → тёмный текст -------- */
+const lumCv = document.createElement('canvas'); lumCv.width = 16; lumCv.height = 4;
+const lumCtx = lumCv.getContext('2d', { willReadFrequently: true });
+let lastLum = 0;
+function sampleHeader(now){
+  if (now - lastLum < 180) return;
+  lastLum = now;
+  const fr = filmEl.getBoundingClientRect();
+  if (fr.bottom < innerHeight * 0.4){
+    /* фильм уже уехал вверх — включаем вуаль-подложку и смотрим, какая секция под шапкой;
+       саму шапку и лоадер пропускаем, иначе сэмпл попадает в невидимый блок главы по центру */
+    hdr.classList.add('veil');
+    const el = document.elementsFromPoint(innerWidth/2, 44).find(n => !n.closest('#loader, header'));
+    const dark = el && el.closest('#manifesto, footer, #chiffres');
+    hdr.classList.toggle('on-light', !dark);
+    return;
+  }
+  hdr.classList.remove('veil');
+  if (displayed < 0) return;
+  try{
+    const src = bitmaps.get(displayed) || nearestFrame(displayed);
+    if (!src) return;
+    lumCtx.drawImage(src, 0, 0, src.width, src.height*0.16, 0, 0, 16, 4);
+    const d = lumCtx.getImageData(0,0,16,4).data;
+    let sum = 0;
+    for (let i = 0; i < d.length; i += 4) sum += d[i]*.299 + d[i+1]*.587 + d[i+2]*.114;
+    hdr.classList.toggle('on-light', sum / (d.length/4) > 138);
+  }catch(e){}
+}
+
+/* -------- биты -------- */
+function beatAlpha(b, p){
+  if (p < b.in || p > b.out) return 0;
+  if (p < b.peak) return (p - b.in) / Math.max(1e-4, b.peak - b.in);
+  if (b.out > 1.5) return 1;
+  return 1 - (p - b.peak) / Math.max(1e-4, b.out - b.peak);
+}
+
+/* -------- главный тик -------- */
+let currentFrame = 0, prog = 0;
+const fadeBottom = $('#fadeBottom');
+const chapterEl = $('#chapter'), chapterName = $('#chapterName'), chapterBar = $('#chapterBar');
+const skipEl = $('#skipFilm'), dimEl = $('#dim');
+const grainEl = document.querySelector('.grain'), vinEl = document.querySelector('.vignette');
+let jankDeltas = [], lastTick = performance.now(), lastJankLog = performance.now();
+
+function tick(now){
+  const d = now - lastTick; lastTick = now;
+  jankDeltas.push(d);
+  if (now - lastJankLog > 2000){
+    jankDeltas.sort((a,b)=>a-b);
+    const mx = jankDeltas[jankDeltas.length-1];
+    console.log(`[jank] frames:${jankDeltas.length} max:${mx.toFixed(1)}ms p95:${jankDeltas[Math.floor(jankDeltas.length*.95)].toFixed(1)}ms`);
+    jankDeltas = []; lastJankLog = now;
+  }
+
+  const r = filmEl.getBoundingClientRect();
+  prog = Math.max(0, Math.min(1, -r.top / (r.height - innerHeight)));
+
+  const target = prog * (FRAME_COUNT - 1);
+  currentFrame += (target - currentFrame) * 0.14;
+  if (Math.abs(target - currentFrame) < 0.05) currentFrame = target;
+  const idx = Math.round(currentFrame);
+  ensureBitmaps(idx);
+  drawFrame(idx);
+  sampleHeader(now);
+
+  let maxBeat = 0;
+  for (const b of beats){
+    const a = beatAlpha(b, prog);
+    if (a * b.dim > maxBeat) maxBeat = a * b.dim;
+    b.el.style.opacity = a.toFixed(3);
+    /* невидимый бит гасим целиком: иначе его CTA ловит клики и Tab-фокус сквозь весь фильм */
+    b.el.style.visibility = a <= 0.001 ? 'hidden' : 'visible';
+    if (!b.el.classList.contains('hero'))
+      b.el.style.transform = `translateY(${((1-a) * 26) * (prog > b.peak ? -1 : 1)}px)`;
+  }
+  /* кадр притемняется ровно настолько, насколько виден текст, — и не более чем на 85% шкалы:
+     между главами плёнка возвращает полную яркость */
+  dimEl.style.opacity = (maxBeat * 0.85).toFixed(3);
+
+  ambAlpha = Math.max(0, 1 - prog/0.07);
+  drawAmbient(now);
+
+  const seamRamp = Math.max(0, (prog - 0.92) / 0.08);
+  fadeBottom.style.opacity = seamRamp.toFixed(3);
+  grainEl.style.opacity = (0.07 * (1 - seamRamp)).toFixed(3);
+  vinEl.style.opacity = (1 - seamRamp).toFixed(3);
+
+  const inFilm = r.top <= 0 && r.bottom >= innerHeight;
+  chapterEl.classList.toggle('show', inFilm && prog > 0.04 && prog < 0.985);
+  skipEl.classList.toggle('show', inFilm && prog > 0.03 && prog < 0.86);
+  const ch = Math.min(4, Math.floor(prog * 5));
+  chapterName.textContent = chapters[ch];
+  chapterBar.style.width = `${((prog*5) - ch) * 100}%`;
+
+  requestAnimationFrame(tick);
+}
+
+/* -------- карта (MapLibre GL, стиль Carto positron — как в mapcn) --------
+   Сам maplibre (JS ~212КБ gz + CSS) не участвует в критическом пути:
+   грузим его только когда секция карты подъезжает к экрану. */
+let lumeMap = null, mapAssetsStarted = false;
+function loadMapAssets(){
+  if (mapAssetsStarted) return;
+  mapAssetsStarted = true;
+  const pc = document.createElement('link');
+  pc.rel = 'preconnect'; pc.href = 'https://basemaps.cartocdn.com';
+  document.head.appendChild(pc);
+  const css = document.createElement('link');
+  css.rel = 'stylesheet'; css.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+  document.head.appendChild(css);
+  const s = document.createElement('script');
+  s.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+  s.onload = initMap;
+  s.onerror = () => console.warn('карта: maplibre недоступен — остаётся текстовая заглушка');
+  document.head.appendChild(s);
+}
+function initMap(){
+  if (lumeMap || typeof maplibregl === 'undefined') return;
+  const LUME_LNGLAT = [69.2797, 41.3111];
+  lumeMap = new maplibregl.Map({
+    container: 'map',
+    style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    center: LUME_LNGLAT,
+    zoom: 15.4,
+    attributionControl: { compact: true },
+    scrollZoom: false,           /* колесо листает страницу, не карту */
+    cooperativeGestures: true,   /* тач: пан двумя пальцами — карта не ловит скролл страницы */
+    renderWorldCopies: false
+  });
+  document.querySelector('.mapwrap').classList.add('live');
+  let mapErrLogged = false;
+  lumeMap.on('error', e => {
+    if (mapErrLogged) return;
+    mapErrLogged = true;
+    console.warn('карта: ошибка стиля/тайлов', e && e.error && e.error.message);
+  });
+  const pin = document.createElement('div');
+  pin.className = 'lume-pin';
+  const popup = new maplibregl.Popup({ offset: 24, closeButton: false, closeOnClick: false })
+    .setHTML('<strong>LUMÉ</strong><br>Ташкент, ул. Шёлковая, 5<br><span style="opacity:.65">Ежедневно 10:00–21:00</span>');
+  new maplibregl.Marker({ element: pin, anchor: 'center' })
+    .setLngLat(LUME_LNGLAT).setPopup(popup).addTo(lumeMap);
+  popup.setLngLat(LUME_LNGLAT).addTo(lumeMap);
+  document.getElementById('mapZoomIn').addEventListener('click',
+    () => lumeMap.zoomTo(lumeMap.getZoom() + 1, { duration: 300 }));
+  document.getElementById('mapZoomOut').addEventListener('click',
+    () => lumeMap.zoomTo(lumeMap.getZoom() - 1, { duration: 300 }));
+}
+/* карта грузит библиотеку и тайлы только когда секция подъезжает к экрану */
+const locSection = document.getElementById('location');
+if ('IntersectionObserver' in window){
+  const io = new IntersectionObserver(entries => {
+    if (entries.some(e => e.isIntersecting)){ loadMapAssets(); io.disconnect(); }
+  }, { rootMargin: '600px' });
+  io.observe(locSection);
+} else { loadMapAssets(); }
+
+/* фон манифеста (48КБ) — тоже не в критическом пути */
+const manEl = document.getElementById('manifesto');
+if (manEl && 'IntersectionObserver' in window){
+  const mio = new IntersectionObserver(es => {
+    if (es.some(e => e.isIntersecting)){ manEl.classList.add('bg'); mio.disconnect(); }
+  }, { rootMargin: '800px' });
+  mio.observe(manEl);
+} else if (manEl) manEl.classList.add('bg');
+
+/* -------- ателье в цифрах: count-up при появлении -------- */
+const fmtNum = n => n.toLocaleString('ru-RU');
+function countUp(el, target, suffix){
+  const t0 = performance.now(), DUR = 1800;
+  const ease = t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+  const step = now => {
+    const p = Math.min((now - t0) / DUR, 1);
+    el.textContent = fmtNum(Math.round(ease(p) * target)) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const chiffres = document.querySelectorAll('.chiffre');
+if (chiffres.length){
+  if (reduceMotion || !('IntersectionObserver' in window)){
+    chiffres.forEach(c => c.querySelector('.val').textContent = fmtNum(+c.dataset.target) + (c.dataset.suffix || ''));
+  } else {
+    const cio = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        cio.unobserve(e.target);
+        const delay = [...chiffres].indexOf(e.target) * 150;
+        setTimeout(() => countUp(e.target.querySelector('.val'), +e.target.dataset.target, e.target.dataset.suffix || ''), delay);
+      });
+    }, { threshold: 0.4 });
+    chiffres.forEach(c => cio.observe(c));
+  }
+}
+
+/* -------- форма записи: маска +998, валидация, экран успеха (демо без бэкенда) -------- */
+const bookForm = $('#bookForm'), fName = $('#fName'), fPhone = $('#fPhone'), fRitual = $('#fRitual');
+const thanksEl = $('#thanks');
+fPhone.addEventListener('focus', () => { if (!fPhone.value.trim()) fPhone.value = '+998 '; });
+fPhone.addEventListener('blur', () => { if (fPhone.value.replace(/\D/g,'') === '998') fPhone.value = ''; });
+/* Backspace над разделителем должен стирать ближайшую цифру слева, а не «залипать» */
+fPhone.addEventListener('beforeinput', e => {
+  if (e.inputType !== 'deleteContentBackward') return;
+  const p = fPhone.selectionStart, v = fPhone.value;
+  if (p !== fPhone.selectionEnd || !p || /\d/.test(v[p-1] || '')) return;
+  e.preventDefault();
+  let i = p - 1;
+  while (i > 0 && !/\d/.test(v[i-1])) i--;
+  if (!i) return;
+  const digitsLeft = v.slice(0, i-1).replace(/\D/g,'').length;
+  fPhone.value = v.slice(0, i-1) + v.slice(p);
+  fPhone.dispatchEvent(new Event('input', { bubbles: true }));
+  setCaretByDigits(digitsLeft);
+});
+function setCaretByDigits(digitsLeft){
+  let pos = 0, cnt = 0;
+  const v = fPhone.value;
+  while (pos < v.length && cnt < digitsLeft){ if (/\d/.test(v[pos])) cnt++; pos++; }
+  fPhone.setSelectionRange(pos, pos);
+}
+fPhone.addEventListener('input', () => {
+  const digitsLeft = fPhone.value.slice(0, fPhone.selectionStart ?? fPhone.value.length).replace(/\D/g,'').length;
+  let d = fPhone.value.replace(/\D/g, '');
+  /* вставка полного номера поверх автопрефикса «+998 » — префикс не задваиваем */
+  d = d.replace(/^998(?=998\d{6,})/, '');
+  if (d.startsWith('998')){
+    d = d.slice(0, 12);
+    const g = [d.slice(0,3), d.slice(3,5), d.slice(5,8), d.slice(8,10), d.slice(10,12)].filter(Boolean);
+    fPhone.value = '+' + g.join(' ');
+  } else {
+    fPhone.value = d ? '+' + d.slice(0, 15) : '';
+  }
+  setCaretByDigits(Math.min(digitsLeft, fPhone.value.replace(/\D/g,'').length));
+});
+const setErr = (input, on) => {
+  input.closest('.field').classList.toggle('err', on);
+  input.setAttribute('aria-invalid', on ? 'true' : 'false');
+};
+[fName, fPhone].forEach(i => i.addEventListener('input', () => setErr(i, false)));
+bookForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const digits = fPhone.value.replace(/\D/g,'');
+  const nameOk = fName.value.trim().length >= 2;
+  /* узбекский номер обязан быть полным (12 цифр); иностранным — от 11 */
+  const phoneOk = digits.startsWith('998') ? digits.length === 12 : digits.length >= 11;
+  setErr(fName, !nameOk); setErr(fPhone, !phoneOk);
+  if (!nameOk){ fName.focus(); return; }
+  if (!phoneOk){ fPhone.focus(); return; }
+  $('#thanksTitle').textContent = `Мерси, ${fName.value.trim().split(/\s+/)[0]}!`;
+  $('#thanksPhone').textContent = fPhone.value;
+  bookForm.classList.add('sent');
+  setTimeout(() => {
+    bookForm.querySelectorAll(':scope > .field, :scope > button').forEach(el => el.style.display = 'none');
+    thanksEl.classList.add('show');
+    thanksEl.focus({ preventScroll: true });
+  }, reduceMotion ? 0 : 380);
+});
+$('#editReq').addEventListener('click', () => {
+  thanksEl.classList.remove('show');
+  bookForm.querySelectorAll(':scope > .field, :scope > button').forEach(el => el.style.display = '');
+  requestAnimationFrame(() => bookForm.classList.remove('sent'));
+  fName.focus();
+});
+
+/* -------- якоря: плавный скролл + предвыбор ритуала с карточек -------- */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href');
+    e.preventDefault();
+    if (a.dataset.ritual) fRitual.value = a.dataset.ritual;
+    if (id.length < 2){
+      if (lenis) lenis.scrollTo(0, { duration: 1.6 }); else scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+      return;
+    }
+    const target = document.querySelector(id);
+    if (!target) return;
+    const y = target.getBoundingClientRect().top + scrollY - 34;
+    if (lenis) lenis.scrollTo(y, { duration: 1.4 });
+    else scrollTo({ top: y, behavior: reduceMotion ? 'auto' : 'smooth' });
+  });
+});
+
+/* -------- старт -------- */
+const loadBar = $('#loadBar'), loadPct = $('#loadPct'), loader = $('#loader');
+makeSprite();
+sizeCanvases();
+makeParts();
+addEventListener('resize', () => { sizeCanvases(); makeParts(); });
+
+pump(
+  p => { loadBar.style.transform = `scaleX(${p})`; loadPct.textContent = `${Math.round(p*100)}%`; },
+  /* лента докачана → сеть свободна: подтягиваем библиотеку карты в первый простой,
+     чтобы её ~90мс парсинга не попали в скролл (IO у секции остаётся страховкой) */
+  () => { if ('requestIdleCallback' in window) requestIdleCallback(() => loadMapAssets()); else setTimeout(loadMapAssets, 2000); }
+);
+
+/* готовность: битмап первого кадра + шрифты (чтобы вордмарк не мигнул фолбэком) —
+   либо предохранитель по таймауту. Движок терпим к дырам в ленте (nearestFrame),
+   поэтому один битый кадр не имеет права повесить сайт навсегда. */
+let fontsDone = false;
+document.fonts.ready.then(() => { fontsDone = true; });
+const BOOT_T0 = performance.now();
+const reveal = () => { loader.classList.add('done'); window.__ready = true; };
+const bootCheck = setInterval(() => {
+  const overdue = performance.now() - BOOT_T0 > 7000;
+  if (images[0]) ensureBitmaps(0);
+  const coreReady = bitmaps.has(0) && fontsDone && loadedNeed >= Math.min(NEED, 8);
+  if (!coreReady && !overdue) return;
+  if (!images[0] && !nearestFrame(0) && !overdue) return;
+  clearInterval(bootCheck);
+  drawFrame(0, true);
+  requestAnimationFrame(tick);
+  if (JUMP !== null){
+    scrollTo(0, +JUMP || 0);
+    const r = filmEl.getBoundingClientRect();
+    prog = Math.max(0, Math.min(1, -r.top / (r.height - innerHeight)));
+    currentFrame = prog * (FRAME_COUNT - 1);
+    const idx = Math.round(currentFrame);
+    ensureBitmaps(idx);
+    const J_T0 = performance.now();
+    const settle = setInterval(() => {
+      if (bitmaps.has(idx) || nearestFrame(idx) || performance.now() - J_T0 > 5000){
+        clearInterval(settle);
+        drawFrame(idx, true);
+        reveal();
+      }
+    }, 60);
+  } else {
+    reveal();
+  }
+}, 80);
+</script>
+</body>
+</html>
