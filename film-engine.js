@@ -1,4 +1,4 @@
-/* LUMÉ: ограниченный кэш кадров и стабильная геометрия мобильного Safari. */
+/* LUMÉ: весь сжатый фильм до скролла, ограниченное окно декодированных кадров. */
 const $ = s => document.querySelector(s);
 const FRAME_COUNT = 301;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -22,18 +22,71 @@ if (!mobileFilm && !reduceMotion && JUMP === null && typeof Lenis !== 'undefined
 }
 
 const cache = new Map(), pending = new Map(), failures = new Set();
+const packs = new Map();
 const CACHE_LIMIT = mobileFilm ? 16 : 32, LOAD_LIMIT = mobileFilm ? 2 : 3;
 const AHEAD = mobileFilm ? 8 : 12, BEHIND = mobileFilm ? 3 : 6;
 let frameQueue = [], cacheCenter = 0, direction = 1, frameGeneration = 0;
 let portraitFrames = false, displayed = -1, displayedSource = null;
 let CW = 0, CH = 0, currentFrame = 0, prog = 0, rafId = 0, lastTick = 0;
 let engineStarted = false, filmVisible = true, ambientDirty = false;
+let bootTimer = 0, fontsDone = false, bootDismissed = false;
+document.fonts.ready.then(() => { fontsDone = true; });
 const DPR = Math.min(devicePixelRatio || 1, mobileFilm ? 1.25 : 1.5);
 const releaseFrame = frame => {
   if (typeof frame.close === 'function') frame.close();
   else frame.removeAttribute('src');
 };
-const framePath = i => `./frames/${portraitFrames ? 'mobile/' : ''}f_${String(i + 1).padStart(4, '0')}.jpg`;
+const packProfile = () => portraitFrames ? 'portrait' : 'wide';
+
+async function readFramePack(blob) {
+  const headerSize = 12 + (FRAME_COUNT + 1) * 4;
+  const header = await blob.slice(0, headerSize).arrayBuffer();
+  if (header.byteLength !== headerSize) throw new Error('incomplete film');
+  const view = new DataView(header);
+  const magic = String.fromCharCode(...new Uint8Array(header, 0, 8));
+  if (magic !== 'LUMEF001' || view.getUint32(8, true) !== FRAME_COUNT) throw new Error('invalid film');
+  const offsets = Array.from({ length: FRAME_COUNT + 1 }, (_, i) => view.getUint32(12 + i * 4, true));
+  if (offsets[0] !== headerSize || offsets[FRAME_COUNT] !== blob.size ||
+      offsets.some((n, i) => i && n <= offsets[i - 1])) throw new Error('invalid frame offsets');
+  return offsets;
+}
+
+function getPack() {
+  const profile = packProfile();
+  if (packs.has(profile)) return packs.get(profile);
+  const pack = { blob: null, offsets: null, progress: 0, error: null };
+  packs.set(profile, pack);
+  pack.promise = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
+    try {
+      const response = await fetch(`media/film-${profile}-v3.bin`, { signal: controller.signal });
+      if (!response.ok) throw new Error(`film ${response.status}`);
+      let blob;
+      if (response.body && response.body.getReader) {
+        const total = Number(response.headers.get('Content-Length'));
+        const reader = response.body.getReader(), chunks = [];
+        let received = 0;
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          chunks.push(value); received += value.byteLength;
+          if (total > 0) pack.progress = Math.min(.98, received / total);
+        }
+        blob = new Blob(chunks);
+      } else blob = await response.blob();
+      const offsets = await readFramePack(blob);
+      pack.offsets = offsets; pack.blob = blob; pack.progress = 1;
+      if (profile === packProfile()) {
+        ensureFrames(cacheCenter);
+        wakeFilm();
+      }
+    } catch (error) {
+      pack.error = error;
+    } finally { clearTimeout(timeout); }
+  })();
+  return pack;
+}
 
 function wakeFilm() {
   if (engineStarted && !document.hidden && !rafId) rafId = requestAnimationFrame(tick);
@@ -49,7 +102,7 @@ function trimCache() {
 function resetFrames() {
   frameGeneration++;
   frameQueue = [];
-  for (const request of pending.values()) request.controller.abort();
+  for (const request of pending.values()) request.cancelled = true;
   for (const frame of cache.values()) releaseFrame(frame);
   cache.clear(); failures.clear();
   displayed = -1; displayedSource = null;
@@ -69,17 +122,9 @@ async function decodeFrame(blob) {
 async function loadFrame(i, request) {
   let frame = null;
   try {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const response = await fetch(framePath(i), { signal: request.controller.signal });
-        if (!response.ok) throw new Error(`frame ${response.status}`);
-        frame = await decodeFrame(await response.blob());
-        break;
-      } catch (error) {
-        if (request.controller.signal.aborted || attempt === 1) throw error;
-      }
-    }
-    if (request.generation !== frameGeneration || request.controller.signal.aborted || Math.abs(i - cacheCenter) > CACHE_LIMIT) {
+    const { blob, offsets } = request.pack;
+    frame = await decodeFrame(blob.slice(offsets[i], offsets[i + 1], 'image/webp'));
+    if (request.generation !== frameGeneration || request.cancelled || Math.abs(i - cacheCenter) > CACHE_LIMIT) {
       releaseFrame(frame);
       return;
     }
@@ -87,7 +132,7 @@ async function loadFrame(i, request) {
     trimCache();
     wakeFilm(); // Точный кадр заменяет временный даже после остановки пальца.
   } catch (_) {
-    if (!request.controller.signal.aborted && request.generation === frameGeneration) failures.add(i);
+    if (!request.cancelled && request.generation === frameGeneration) failures.add(i);
   } finally {
     pending.delete(i);
     pumpFrames();
@@ -96,10 +141,12 @@ async function loadFrame(i, request) {
 }
 function pumpFrames() {
   if (document.hidden || !filmVisible) return;
+  const pack = getPack();
+  if (!pack.blob) return;
   while (pending.size < LOAD_LIMIT && frameQueue.length) {
     const i = frameQueue.shift();
     if (cache.has(i) || pending.has(i) || failures.has(i)) continue;
-    const request = { controller: new AbortController(), generation: frameGeneration };
+    const request = { pack, generation: frameGeneration, cancelled: false };
     pending.set(i, request);
     loadFrame(i, request);
   }
@@ -113,9 +160,6 @@ function ensureFrames(center) {
     if (distance <= BEHIND) wanted.push(center - distance * direction);
   }
   frameQueue = wanted.filter(i => i >= 0 && i < FRAME_COUNT && !cache.has(i) && !pending.has(i) && !failures.has(i));
-  for (const [i, request] of pending) {
-    if (Math.abs(i - center) > CACHE_LIMIT) request.controller.abort();
-  }
   pumpFrames();
 }
 function nearestFrame(idx) {
@@ -143,7 +187,8 @@ function sizeCanvases() {
   }
   CW = width; CH = height;
   const portrait = mobileFilm && CW <= 540 && CW / CH <= 2 / 3;
-  if (portrait !== portraitFrames) { portraitFrames = portrait; resetFrames(); }
+  const profileChanged = portrait !== portraitFrames;
+  if (profileChanged) { portraitFrames = portrait; resetFrames(); }
   screenCv.width = Math.round(CW * DPR); screenCv.height = Math.round(CH * DPR);
   sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (previous) {
@@ -158,6 +203,7 @@ function sizeCanvases() {
   }
   drawFrame(Math.round(currentFrame), true);
   if (engineStarted) ensureFrames(Math.round(currentFrame));
+  if (engineStarted && profileChanged) monitorFilmLoading();
   return true;
 }
 
@@ -258,13 +304,48 @@ function tick(now) {
   const alpha = mobileFilm || reduceMotion ? 1 : 1 - Math.pow(.86, elapsed / 16.67);
   currentFrame += (target - currentFrame) * alpha;
   if (Math.abs(target - currentFrame) < .05) currentFrame = target;
-  if (filmVisible) { ensureFrames(Math.round(currentFrame)); drawFrame(Math.round(currentFrame)); }
-  else { frameQueue = []; for (const request of pending.values()) request.controller.abort(); }
+  if (filmVisible) {
+    ensureFrames(Math.round(currentFrame)); drawFrame(Math.round(currentFrame));
+    if (!window.__ready && !bootTimer && !bootDismissed) monitorFilmLoading();
+  } else {
+    frameQueue = []; bootDismissed = false;
+    for (const request of pending.values()) request.cancelled = true;
+  }
   sampleHeader(rect, now);
   updateOverlays(prog, rect.top <= 0 && rect.bottom >= CH);
   const ambient = filmVisible ? Math.max(0, 1 - prog / .07) : 0;
   drawAmbient(now, ambient);
   if (filmVisible && (currentFrame !== target || (!mobileFilm && !reduceMotion && ambient > .005))) wakeFilm();
+}
+
+function monitorFilmLoading() {
+  clearInterval(bootTimer);
+  const started = performance.now();
+  window.__ready = false;
+  bootTimer = setInterval(() => {
+    if (!filmVisible) {
+      clearInterval(bootTimer); bootTimer = 0;
+      $('#loader').classList.add('done');
+      return;
+    }
+    const pack = getPack();
+    const ready = !!pack.blob && cache.has(Math.round(currentFrame));
+    const error = pack.error || failures.has(Math.round(currentFrame));
+    const percent = ready ? 100 : Math.floor(pack.progress * 95);
+    $('#loadBar').style.transform = `scaleX(${percent / 100})`;
+    $('#loadPct').textContent = error ? 'Не удалось загрузить фильм' : `${percent}%`;
+    $('#loadRetry').hidden = !error;
+    $('#loadSkip').hidden = !error && performance.now() - started < 7000;
+    // Семь секунд ограничивают ожидание шрифтов, но не открывают недогруженный фильм.
+    if (!ready || (!fontsDone && performance.now() - started < 7000)) {
+      if (filmVisible && (error || performance.now() - started > 250)) $('#loader').classList.remove('done');
+      return;
+    }
+    clearInterval(bootTimer); bootTimer = 0;
+    $('#loader').classList.add('done');
+    window.__ready = true;
+    wakeFilm();
+  }, 80);
 }
 
 function startFilm() {
@@ -277,22 +358,21 @@ function startFilm() {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       cancelAnimationFrame(rafId); rafId = 0;
-      for (const request of pending.values()) request.controller.abort();
+      for (const request of pending.values()) request.cancelled = true;
     } else { lastTick = 0; sizeCanvases(); wakeFilm(); }
+  });
+  $('#loadRetry').addEventListener('click', () => {
+    packs.delete(packProfile());
+    resetFrames();
+    ensureFrames(Math.round(currentFrame));
+    $('#loadRetry').hidden = true;
+    monitorFilmLoading();
+  });
+  $('#loadSkip').addEventListener('click', () => {
+    clearInterval(bootTimer); bootTimer = 0; bootDismissed = true;
+    $('#loader').classList.add('done');
   });
   if (JUMP !== null) scrollTo(0, +JUMP || 0);
   tick(performance.now());
-  const started = performance.now();
-  let fontsDone = false;
-  document.fonts.ready.then(() => { fontsDone = true; });
-  const boot = setInterval(() => {
-    const ready = cache.has(Math.round(currentFrame));
-    $('#loadBar').style.transform = `scaleX(${ready ? 1 : .1})`;
-    $('#loadPct').textContent = ready ? '100%' : '10%';
-    if (!(ready && fontsDone) && performance.now() - started < 7000) return;
-    clearInterval(boot);
-    $('#loader').classList.add('done');
-    window.__ready = true;
-    wakeFilm();
-  }, 80);
+  monitorFilmLoading();
 }
