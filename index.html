@@ -8,7 +8,8 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#17110B">
 <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
-<link rel="preload" as="image" href="./frames/f_0001.jpg" fetchpriority="high">
+<link rel="preload" as="image" href="./frames/mobile/f_0001.jpg" media="(max-width: 540px) and (max-aspect-ratio: 2/3)" fetchpriority="high">
+<link rel="preload" as="image" href="./frames/f_0001.jpg" media="(min-width: 541px), (min-aspect-ratio: 2/3)" fetchpriority="high">
 
 <meta property="og:url" content="https://markmateriaai-crypto.github.io/lume-beauty-demo/">
 <!-- Open Graph: превью при шаринге ссылки -->
@@ -93,6 +94,14 @@
   /* ---------- ФИЛЬМ ---------- */
   #film{height:850vh;position:relative}
   #stage{position:sticky;top:0;height:100vh;overflow:hidden;background:var(--noir)}
+  @supports(height:100lvh){#film{height:850lvh}#stage{height:100lvh}}
+  .mobile-film #ambient,.mobile-film .grain{display:none}
+  .mobile-film .beat::before{filter:none}
+  .mobile-film .beat.hero .wordmark svg{filter:none}
+  @supports(height:100svh){
+    .mobile-film .beat.hero .hint{bottom:calc(38px + 100lvh - 100svh)}
+    .mobile-film .beat.finale{padding-bottom:calc(96px + 100lvh - 100svh)}
+  }
   #screen,#ambient{position:absolute;inset:0;width:100%;height:100%;display:block}
   .grain,.vignette{position:absolute;inset:0;pointer-events:none}
   .vignette{background:radial-gradient(ellipse at center, transparent 55%, rgba(13,9,5,.55) 100%)}
@@ -669,262 +678,8 @@
 </footer>
 
 <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="film-engine.js"></script>
 <script>
-/* ============ LUMÉ scroll-film engine ============ */
-const FRAME_COUNT = 301;
-const framePath = i => `./frames/f_${String(i+1).padStart(4,'0')}.jpg`;
-
-const $ = s => document.querySelector(s);
-const screenCv = $('#screen'), sctx = screenCv.getContext('2d');
-const filmEl = $('#film'), hdr = $('#hdr');
-const beats = [...document.querySelectorAll('.beat')].map(el => ({
-  el, in:+el.dataset.in, peak:+el.dataset.peak, out:+el.dataset.out,
-  /* сколько притемнения просит бит: хиро и финал скромнее — у них крупный текст и свой скрим */
-  dim: el.dataset.dim === undefined ? 1 : +el.dataset.dim
-}));
-const chapters = ['Chapitre 01 · Crème','Chapitre 02 · Poudre','Chapitre 03 · Soie','Chapitre 04 · Goutte','Chapitre 05 · Atelier'];
-const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* -------- ?jump= дев-контракт -------- */
-const JUMP = new URLSearchParams(location.search).get('jump');
-if (JUMP !== null) history.scrollRestoration = 'manual';
-
-/* -------- Lenis (плавный скролл), с фолбэком -------- */
-let lenis = null;
-if (typeof Lenis !== 'undefined' && JUMP === null && !reduceMotion){
-  lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
-  const raf = t => { lenis.raf(t); requestAnimationFrame(raf) };
-  requestAnimationFrame(raf);
-}
-
-/* -------- загрузка кадров: насос с ограничением -------- */
-const images = new Array(FRAME_COUNT).fill(null);
-let loaded = 0, loadedNeed = 0;
-const PUMP = 10;
-const NEED = Math.min(FRAME_COUNT, 24); /* стартовый буфер; шкала лоадера нормирована на него */
-/* порядок насоса: стартовый буфер → каждый 8-й по всей ленте (грубое покрытие
-   для глубоких прыжков, промах nearestFrame ≤ ±4) → дозаполнение остального */
-const ORDER = (() => {
-  const o = [], seen = new Set();
-  const take = i => { if (!seen.has(i)){ seen.add(i); o.push(i); } };
-  for (let i = 0; i < NEED; i++) take(i);
-  for (let i = 0; i < FRAME_COUNT; i += 8) take(i);
-  for (let i = 0; i < FRAME_COUNT; i++) take(i);
-  return o;
-})();
-let nextIdx = 0;
-function pump(onProgress, onDone){
-  let inFlight = 0;
-  const settle = (i, img) => {
-    loaded++;
-    if (i < NEED) loadedNeed++;
-    images[i] = img;
-    onProgress(Math.min(1, loadedNeed / NEED));
-    if (loaded === FRAME_COUNT) onDone();
-    else kick();
-  };
-  const load = (i, attempt) => {
-    inFlight++;
-    const img = new Image();
-    img.onload = () => { inFlight--; settle(i, img); };
-    img.onerror = () => {
-      inFlight--;
-      /* сорвавшийся кадр не хороним сразу: одна повторная попытка с паузой */
-      if (attempt < 2) setTimeout(() => load(i, attempt + 1), 400);
-      else settle(i, null);
-      kick();
-    };
-    img.src = framePath(i);
-  };
-  const kick = () => { while (inFlight < PUMP && nextIdx < ORDER.length) load(ORDER[nextIdx++], 1); };
-  kick();
-}
-function nearestFrame(idx){
-  if (images[idx]) return images[idx];
-  for (let d = 1; d < FRAME_COUNT; d++){
-    if (images[idx-d]) return images[idx-d];
-    if (images[idx+d]) return images[idx+d];
-  }
-  return null;
-}
-
-/* -------- ImageBitmap скользящее окно (анти-джанк) -------- */
-const bitmaps = new Map(), decoding = new Set();
-let B_AHEAD = 18, B_KEEP = 28;
-if ((navigator.deviceMemory || 8) <= 4){ B_AHEAD = 10; B_KEEP = 16; } /* слабым устройствам — окно поуже */
-let bmpCenter = -999, displayed = -1;
-function ensureBitmaps(center){
-  if (Math.abs(center - bmpCenter) < 3) return;
-  bmpCenter = center;
-  const lo = Math.max(0, center - B_AHEAD), hi = Math.min(FRAME_COUNT-1, center + B_AHEAD);
-  for (let i = lo; i <= hi; i++){
-    if (bitmaps.has(i) || decoding.has(i) || !images[i]) continue;
-    decoding.add(i);
-    createImageBitmap(images[i]).then(b => {
-      decoding.delete(i);
-      if (Math.abs(i - bmpCenter) > B_KEEP){ b.close(); return; }
-      bitmaps.set(i, b);
-      if (i === displayed) drawFrame(i, true);
-    }).catch(() => decoding.delete(i));
-  }
-  for (const k of [...bitmaps.keys()])
-    if (k < center - B_KEEP || k > center + B_KEEP){ bitmaps.get(k).close(); bitmaps.delete(k); }
-}
-
-/* -------- канвас: размер и отрисовка cover -------- */
-let CW = 0, CH = 0;
-const DPR = Math.min(devicePixelRatio || 1, 1.5);
-function sizeCanvases(){
-  CW = innerWidth; CH = innerHeight;
-  for (const cv of [screenCv, ambCv]){
-    cv.width = CW * DPR; cv.height = CH * DPR;
-    cv.getContext('2d').setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  drawFrame(displayed >= 0 ? displayed : 0, true);
-}
-function drawFrame(idx, force){
-  if (idx === displayed && !force) return;
-  const src = bitmaps.get(idx) || nearestFrame(idx);
-  if (!src) return;
-  displayed = idx;
-  const iw = src.width, ih = src.height;
-  const s = Math.max(CW/iw, CH/ih);
-  const dw = iw*s, dh = ih*s;
-  sctx.drawImage(src, (CW-dw)/2, (CH-dh)/2, dw, dh);
-}
-
-/* -------- эмбиент: золотая пыльца поверх хиро -------- */
-const ambCv = $('#ambient'), actx = ambCv.getContext('2d');
-let sprite = null, parts = [];
-function makeSprite(){
-  sprite = document.createElement('canvas');
-  sprite.width = sprite.height = 32;
-  const c = sprite.getContext('2d');
-  const g = c.createRadialGradient(16,16,0,16,16,16);
-  g.addColorStop(0,'rgba(255,232,180,1)'); g.addColorStop(.35,'rgba(232,196,120,.55)'); g.addColorStop(1,'rgba(232,196,120,0)');
-  c.fillStyle = g; c.fillRect(0,0,32,32);
-}
-function makeParts(){
-  parts = Array.from({length: 64}, () => ({
-    x: Math.random()*CW, y: Math.random()*CH,
-    z: .3 + Math.random()*.7, ph: Math.random()*Math.PI*2,
-    vx: .08 + Math.random()*.22, vy: -(.05 + Math.random()*.18)
-  }));
-}
-let ambAlpha = 1;
-function drawAmbient(t){
-  actx.clearRect(0,0,CW,CH);
-  if (ambAlpha <= 0.005 || reduceMotion || !sprite) return;
-  for (const p of parts){
-    p.x += p.vx*p.z; p.y += p.vy*p.z;
-    if (p.x > CW+20) p.x = -20; if (p.y < -20) p.y = CH+20;
-    const tw = .5 + .5*Math.sin(t*.0016 + p.ph);
-    const s = 5 + 15*p.z*tw;
-    actx.globalAlpha = ambAlpha * (.14 + .5*tw*p.z);
-    actx.drawImage(sprite, p.x-s/2, p.y-s/2, s, s);
-  }
-  actx.globalAlpha = 1;
-}
-
-/* -------- адаптивная шапка: светлый кадр → тёмный текст -------- */
-const lumCv = document.createElement('canvas'); lumCv.width = 16; lumCv.height = 4;
-const lumCtx = lumCv.getContext('2d', { willReadFrequently: true });
-let lastLum = 0;
-function sampleHeader(now){
-  if (now - lastLum < 180) return;
-  lastLum = now;
-  const fr = filmEl.getBoundingClientRect();
-  if (fr.bottom < innerHeight * 0.4){
-    /* фильм уже уехал вверх — включаем вуаль-подложку и смотрим, какая секция под шапкой;
-       саму шапку и лоадер пропускаем, иначе сэмпл попадает в невидимый блок главы по центру */
-    hdr.classList.add('veil');
-    const el = document.elementsFromPoint(innerWidth/2, 44).find(n => !n.closest('#loader, header'));
-    const dark = el && el.closest('#manifesto, footer, #chiffres');
-    hdr.classList.toggle('on-light', !dark);
-    return;
-  }
-  hdr.classList.remove('veil');
-  if (displayed < 0) return;
-  try{
-    const src = bitmaps.get(displayed) || nearestFrame(displayed);
-    if (!src) return;
-    lumCtx.drawImage(src, 0, 0, src.width, src.height*0.16, 0, 0, 16, 4);
-    const d = lumCtx.getImageData(0,0,16,4).data;
-    let sum = 0;
-    for (let i = 0; i < d.length; i += 4) sum += d[i]*.299 + d[i+1]*.587 + d[i+2]*.114;
-    hdr.classList.toggle('on-light', sum / (d.length/4) > 138);
-  }catch(e){}
-}
-
-/* -------- биты -------- */
-function beatAlpha(b, p){
-  if (p < b.in || p > b.out) return 0;
-  if (p < b.peak) return (p - b.in) / Math.max(1e-4, b.peak - b.in);
-  if (b.out > 1.5) return 1;
-  return 1 - (p - b.peak) / Math.max(1e-4, b.out - b.peak);
-}
-
-/* -------- главный тик -------- */
-let currentFrame = 0, prog = 0;
-const fadeBottom = $('#fadeBottom');
-const chapterEl = $('#chapter'), chapterName = $('#chapterName'), chapterBar = $('#chapterBar');
-const skipEl = $('#skipFilm'), dimEl = $('#dim');
-const grainEl = document.querySelector('.grain'), vinEl = document.querySelector('.vignette');
-let jankDeltas = [], lastTick = performance.now(), lastJankLog = performance.now();
-
-function tick(now){
-  const d = now - lastTick; lastTick = now;
-  jankDeltas.push(d);
-  if (now - lastJankLog > 2000){
-    jankDeltas.sort((a,b)=>a-b);
-    const mx = jankDeltas[jankDeltas.length-1];
-    console.log(`[jank] frames:${jankDeltas.length} max:${mx.toFixed(1)}ms p95:${jankDeltas[Math.floor(jankDeltas.length*.95)].toFixed(1)}ms`);
-    jankDeltas = []; lastJankLog = now;
-  }
-
-  const r = filmEl.getBoundingClientRect();
-  prog = Math.max(0, Math.min(1, -r.top / (r.height - innerHeight)));
-
-  const target = prog * (FRAME_COUNT - 1);
-  currentFrame += (target - currentFrame) * 0.14;
-  if (Math.abs(target - currentFrame) < 0.05) currentFrame = target;
-  const idx = Math.round(currentFrame);
-  ensureBitmaps(idx);
-  drawFrame(idx);
-  sampleHeader(now);
-
-  let maxBeat = 0;
-  for (const b of beats){
-    const a = beatAlpha(b, prog);
-    if (a * b.dim > maxBeat) maxBeat = a * b.dim;
-    b.el.style.opacity = a.toFixed(3);
-    /* невидимый бит гасим целиком: иначе его CTA ловит клики и Tab-фокус сквозь весь фильм */
-    b.el.style.visibility = a <= 0.001 ? 'hidden' : 'visible';
-    if (!b.el.classList.contains('hero'))
-      b.el.style.transform = `translateY(${((1-a) * 26) * (prog > b.peak ? -1 : 1)}px)`;
-  }
-  /* кадр притемняется ровно настолько, насколько виден текст, — и не более чем на 85% шкалы:
-     между главами плёнка возвращает полную яркость */
-  dimEl.style.opacity = (maxBeat * 0.85).toFixed(3);
-
-  ambAlpha = Math.max(0, 1 - prog/0.07);
-  drawAmbient(now);
-
-  const seamRamp = Math.max(0, (prog - 0.92) / 0.08);
-  fadeBottom.style.opacity = seamRamp.toFixed(3);
-  grainEl.style.opacity = (0.07 * (1 - seamRamp)).toFixed(3);
-  vinEl.style.opacity = (1 - seamRamp).toFixed(3);
-
-  const inFilm = r.top <= 0 && r.bottom >= innerHeight;
-  chapterEl.classList.toggle('show', inFilm && prog > 0.04 && prog < 0.985);
-  skipEl.classList.toggle('show', inFilm && prog > 0.03 && prog < 0.86);
-  const ch = Math.min(4, Math.floor(prog * 5));
-  chapterName.textContent = chapters[ch];
-  chapterBar.style.width = `${((prog*5) - ch) * 100}%`;
-
-  requestAnimationFrame(tick);
-}
-
 /* -------- карта (MapLibre GL, стиль Carto positron — как в mapcn) --------
    Сам maplibre (JS ~212КБ gz + CSS) не участвует в критическом пути:
    грузим его только когда секция карты подъезжает к экрану. */
@@ -1110,55 +865,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   });
 });
 
-/* -------- старт -------- */
-const loadBar = $('#loadBar'), loadPct = $('#loadPct'), loader = $('#loader');
-makeSprite();
-sizeCanvases();
-makeParts();
-addEventListener('resize', () => { sizeCanvases(); makeParts(); });
-
-pump(
-  p => { loadBar.style.transform = `scaleX(${p})`; loadPct.textContent = `${Math.round(p*100)}%`; },
-  /* лента докачана → сеть свободна: подтягиваем библиотеку карты в первый простой,
-     чтобы её ~90мс парсинга не попали в скролл (IO у секции остаётся страховкой) */
-  () => { if ('requestIdleCallback' in window) requestIdleCallback(() => loadMapAssets()); else setTimeout(loadMapAssets, 2000); }
-);
-
-/* готовность: битмап первого кадра + шрифты (чтобы вордмарк не мигнул фолбэком) —
-   либо предохранитель по таймауту. Движок терпим к дырам в ленте (nearestFrame),
-   поэтому один битый кадр не имеет права повесить сайт навсегда. */
-let fontsDone = false;
-document.fonts.ready.then(() => { fontsDone = true; });
-const BOOT_T0 = performance.now();
-const reveal = () => { loader.classList.add('done'); window.__ready = true; };
-const bootCheck = setInterval(() => {
-  const overdue = performance.now() - BOOT_T0 > 7000;
-  if (images[0]) ensureBitmaps(0);
-  const coreReady = bitmaps.has(0) && fontsDone && loadedNeed >= Math.min(NEED, 8);
-  if (!coreReady && !overdue) return;
-  if (!images[0] && !nearestFrame(0) && !overdue) return;
-  clearInterval(bootCheck);
-  drawFrame(0, true);
-  requestAnimationFrame(tick);
-  if (JUMP !== null){
-    scrollTo(0, +JUMP || 0);
-    const r = filmEl.getBoundingClientRect();
-    prog = Math.max(0, Math.min(1, -r.top / (r.height - innerHeight)));
-    currentFrame = prog * (FRAME_COUNT - 1);
-    const idx = Math.round(currentFrame);
-    ensureBitmaps(idx);
-    const J_T0 = performance.now();
-    const settle = setInterval(() => {
-      if (bitmaps.has(idx) || nearestFrame(idx) || performance.now() - J_T0 > 5000){
-        clearInterval(settle);
-        drawFrame(idx, true);
-        reveal();
-      }
-    }, 60);
-  } else {
-    reveal();
-  }
-}, 80);
+startFilm();
 </script>
 </body>
 </html>
